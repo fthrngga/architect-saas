@@ -1,0 +1,62 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use {{ modelNamespace }};
+use {{ requestNamespace }};
+use Inertia\Inertia;
+
+class {{ class }} extends Controller
+{
+    public function index()
+    {
+        return Inertia::render('{{ viewPath }}/Index', [
+            'items' => {{ model }}::latest()->paginate(10)
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('{{ viewPath }}/Form');
+    }
+
+    public function store({{ request }} $request)
+    {
+        {{ model }}::create($request->validated());
+        return redirect()->route('app.module.index', [
+            'handle' => request()->route('handle'),
+            'project_slug' => request()->route('project_slug'),
+            'module_name' => '{{ table }}'
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $item = {{ model }}::findOrFail($id);
+        return Inertia::render('{{ viewPath }}/Form', [
+            'item' => $item
+        ]);
+    }
+
+    public function update({{ request }} $request, $id)
+    {
+        $item = {{ model }}::findOrFail($id);
+        $item->update($request->validated());
+        
+        return redirect()->route('app.module.index', [
+            'handle' => request()->route('handle'),
+            'project_slug' => request()->route('project_slug'),
+            'module_name' => '{{ table }}'
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $item = {{ model }}::findOrFail($id);
+        $item->delete();
+        
+        return redirect()->back();
+    }
+}

@@ -1,0 +1,81 @@
+import React, { useState, PropsWithChildren } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import { Menu, X, LogOut, LayoutDashboard, Box } from 'lucide-react';
+
+interface Props {
+    title?: string;
+}
+
+export default function AppLayout({ children, title }: PropsWithChildren<Props>) {
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const { auth } = usePage().props as any;
+
+    return (
+        <div className="min-h-screen bg-gray-100 flex">
+            {/* Sidebar */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    } lg:relative lg:translate-x-0`}
+            >
+                <div className="h-16 flex items-center px-6 border-b">
+                    <Link href={route('dashboard')} className="flex items-center gap-2 font-bold text-xl text-indigo-600">
+                        <Box className="w-6 h-6" />
+                        <span>My App</span>
+                    </Link>
+                    <button
+                        className="lg:hidden ml-auto"
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
+                    <div className="py-2">
+                        <Link
+                            href={route('dashboard')}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${route().current('dashboard')
+                                ? 'bg-indigo-50 text-indigo-600 font-medium'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                        >
+                            <LayoutDashboard className="w-4 h-4" />
+                            Dashboard
+                        </Link>
+                    </div>
+                    {/* Modules will be injected here or managed dynamically if we wanted, 
+                        but for static export, users might want to verify sidebar manually or we rely on the 
+                        fact that we don't know the exact routes unless we inject them into this file too.
+                        For V1 export, let's keep it simple. Users can add links manually.
+                    */}
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+                {/* Navbar */}
+                <header className="h-16 border-b bg-white flex items-center justify-between px-4 lg:px-8">
+                    <button
+                        className="lg:hidden"
+                        onClick={() => setSidebarOpen(true)}
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+
+                    <div className="flex items-center gap-4 ml-auto">
+                        <div className="relative">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{auth.user.name}</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Page Content */}
+                <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
+        </div>
+    );
+}

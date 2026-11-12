@@ -1,0 +1,54 @@
+import React from 'react';
+import UserAppLayout from '@/Layouts/UserAppLayout';
+import { Head, useForm } from '@inertiajs/react';
+import { Button } from '@/Components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/Components/ui/card';
+import { Input } from "@/Components/ui/input";
+import { Label } from "@/Components/ui/label";
+
+export default function Form({ project, item }: any) {
+    const isEditing = !!item;
+    const { data, setData, post, put, processing, errors } = useForm({
+        {{ formFields }}
+    });
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const url = isEditing 
+            ? `{{ baseUrl }}/{{ table }}/${item.id}`
+            : `{{ baseUrl }}/{{ table }}`;
+            
+        if (isEditing) {
+            put(url);
+        } else {
+            post(url);
+        }
+    };
+
+    return (
+        <UserAppLayout project={project} title={isEditing ? 'Edit {{ modelName }}' : 'Create {{ modelName }}'}>
+            <Head title={isEditing ? 'Edit {{ modelName }}' : 'Create {{ modelName }}'} />
+            
+            <div className="max-w-2xl mx-auto">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{isEditing ? 'Edit {{ modelName }}' : 'Create New {{ modelName }}'}</CardTitle>
+                    </CardHeader>
+                    <form onSubmit={submit}>
+                        <CardContent className="space-y-4">
+                            {{ formInputs }}
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                            <Button variant="outline" type="button" onClick={() => window.history.back()}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={processing}>
+                                {isEditing ? 'Update' : 'Create'}
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </Card>
+            </div>
+        </UserAppLayout>
+    );
+}
