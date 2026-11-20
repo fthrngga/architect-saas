@@ -18,10 +18,13 @@ import {
     CheckCircle2,
     Palette,
     Sun,
-    Moon
+    Moon,
+    Zap,
+    ShieldCheck
 } from 'lucide-react';
 import { ProjectThemeScope, DEFAULT_THEME } from '@/Components/Theme/ThemeEngine';
 import ThemeSelectorModal from '@/Components/Theme/ThemeSelectorModal';
+import TierLimitModal from '@/Components/Billing/TierLimitModal';
 
 interface UserAppLayoutProps {
     children: React.ReactNode;
@@ -35,11 +38,24 @@ export default function UserAppLayout({ children, title, project, modules = [] }
     const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
     const [isLocalDark, setIsLocalDark] = useState(false);
     const [activeTheme, setActiveTheme] = useState(project?.settings?.theme || DEFAULT_THEME);
-    const { auth, modules: sharedModules } = usePage().props as any;
+    const [tierModalOpen, setTierModalOpen] = useState(false);
+    const [tierModalDesc, setTierModalDesc] = useState<string | undefined>(undefined);
+
+    const { auth, modules: sharedModules, flash } = usePage().props as any;
     const effectiveModules = modules && modules.length > 0 ? modules : (sharedModules || []);
     const ownerHandle = project?.owner?.handle || auth?.user?.handle || '';
     const projectSlug = project?.slug || '';
     const currentUrl = usePage().url;
+
+    const isSuperAdmin = auth?.user?.is_admin || auth?.user?.role === 'superadmin';
+    const tier = auth?.user?.tier || 'free';
+
+    useEffect(() => {
+        if (flash?.tier_limit) {
+            setTierModalDesc(flash.tier_limit);
+            setTierModalOpen(true);
+        }
+    }, [flash?.tier_limit]);
 
     useEffect(() => {
         const handler = (e: any) => {
@@ -158,6 +174,38 @@ export default function UserAppLayout({ children, title, project, modules = [] }
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Studio Proyek</span>
+                    </Link>
+
+                    {/* Super Admin Badge Link */}
+                    {isSuperAdmin && (
+                        <Link
+                            href={route('admin.subscriptions.index')}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white font-mono text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                        >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span className="hidden md:inline">Super Admin</span>
+                        </Link>
+                    )}
+
+                    {/* Tier Badge / Upgrade Link */}
+                    <Link
+                        href={route('billing.index')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all shadow-2xs ${
+                            tier === 'agency'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                : tier === 'pro'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                        }`}
+                        title="Atur Paket & Tagihan"
+                    >
+                        <Zap className="w-3.5 h-3.5 fill-current text-[#ea580c]" />
+                        <span className="capitalize">{tier}</span>
+                        {tier === 'free' && (
+                            <span className="text-[10px] bg-[#ea580c] text-white px-1.5 py-0.5 rounded-md ml-0.5">
+                                Upgrade
+                            </span>
+                        )}
                     </Link>
 
                     <div className={`h-6 w-px mx-1 ${isLocalDark ? 'bg-white/10' : 'bg-[#101c36]/15'}`} />
@@ -352,6 +400,13 @@ export default function UserAppLayout({ children, title, project, modules = [] }
                 onClose={() => setIsThemeModalOpen(false)}
                 project={project}
                 onThemeUpdated={(updatedTheme) => setActiveTheme(updatedTheme)}
+            />
+
+            {/* Global Limit Interceptor Modal */}
+            <TierLimitModal
+                isOpen={tierModalOpen}
+                onClose={() => setTierModalOpen(false)}
+                description={tierModalDesc}
             />
         </div>
     );

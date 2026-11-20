@@ -24,6 +24,14 @@ class ModuleController extends Controller
 
     public function store(Request $request, Project $project, GeneratorService $generator)
     {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        if (!$user->canCreateModule($project)) {
+            throw ValidationException::withMessages([
+                'tier_limit' => 'Batas maksimal 3 modul per proyek untuk paket Free telah tercapai. Upgrade ke paket Pro untuk membuat modul tanpa batas!'
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'table_name' => ['required', 'string', 'max:255'],

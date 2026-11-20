@@ -37,6 +37,19 @@ Route::middleware(['auth'])->group(function () {
     // Theme & Styling Settings (Tweakcn integration)
     Route::get('/projects/{project}/themes', [App\Modules\ArchitectCore\Http\Controllers\ProjectThemeController::class, 'index'])->name('architect.projects.themes.index');
     Route::post('/projects/{project}/theme', [App\Modules\ArchitectCore\Http\Controllers\ProjectThemeController::class, 'update'])->name('architect.projects.theme.update');
+
+    // Billing & Subscriptions
+    Route::get('/billing', [App\Http\Controllers\SubscriptionController::class, 'index'])->name('billing.index');
+    Route::post('/billing/invoice', [App\Http\Controllers\SubscriptionController::class, 'createInvoice'])->name('billing.invoice');
+    Route::post('/billing/{payment}/proof', [App\Http\Controllers\SubscriptionController::class, 'uploadProof'])->name('billing.proof');
+});
+
+// Super Admin Panel Routes
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/subscriptions', [App\Http\Controllers\Admin\AdminSubscriptionController::class, 'index'])->name('admin.subscriptions.index');
+    Route::post('/subscriptions/{payment}/approve', [App\Http\Controllers\Admin\AdminSubscriptionController::class, 'approve'])->name('admin.subscriptions.approve');
+    Route::post('/subscriptions/{payment}/reject', [App\Http\Controllers\Admin\AdminSubscriptionController::class, 'reject'])->name('admin.subscriptions.reject');
+    Route::post('/users/{user}/update-tier', [App\Http\Controllers\Admin\AdminSubscriptionController::class, 'updateUserTier'])->name('admin.users.update-tier');
 });
 
 // Project App Preview Routes

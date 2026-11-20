@@ -30,6 +30,14 @@ class ProjectController extends Controller
 
     public function store(Request $request, GeneratorService $generator)
     {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        if (!$user->canCreateProject()) {
+            return back()->withErrors([
+                'tier_limit' => 'Anda telah mencapai batas kuota pembuatan proyek untuk paket Free. Silakan upgrade ke paket Pro untuk membuat proyek tanpa batas!'
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -57,6 +65,8 @@ class ProjectController extends Controller
                 'theme' => 'architect',
             ]
         ]);
+
+        $user->increment('lifetime_projects_count');
 
         // If modules are provided via synthesis or manual form, provision them immediately
         if (!empty($validated['modules'])) {
@@ -144,8 +154,17 @@ class ProjectController extends Controller
             abort(403);
         }
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        if (!$user->canExportProject($project)) {
+            return back()->withErrors([
+                'tier_limit' => 'Anda telah menggunakan 1x kuota unduh ZIP codebase gratis seumur hidup. Upgrade ke paket Pro untuk mengunduh source code tanpa batas!'
+            ]);
+        }
+
         try {
             $zipPath = $exporter->export($project);
+            $user->increment('lifetime_exports_count');
             return response()->download($zipPath)->deleteFileAfterSend(true);
         } catch (\Exception $e) {
             return back()->withErrors(['message' => 'Export failed: ' . $e->getMessage()]);
