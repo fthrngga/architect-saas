@@ -10,8 +10,10 @@ class EditorController extends Controller
 {
     public function canvas(Project $project)
     {
+        $project->load(['owner', 'modules']);
         return Inertia::render('Architect/Editor/Canvas', [
-            'project' => $project
+            'project' => $project,
+            'modules' => $project->modules
         ]);
     }
 }

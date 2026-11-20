@@ -1,76 +1,476 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
+    --bg-cad: #07090e;
+    --surface-cad: #0d111a;
+    --surface-elevated: #131a29;
+    --blueprint: #00f0ff;
+    --blueprint-glow: rgba(0, 240, 255, 0.4);
+    --ochre: #f59e0b;
+    --border-cad: rgba(255, 255, 255, 0.08);
+
+    --font-grotesk: "Space Grotesk", sans-serif;
+    --font-cad: "Space Mono", monospace;
+    --font-mono: "JetBrains Mono", monospace;
+    --font-sans: "Plus Jakarta Sans", sans-serif;
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
- 
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
- 
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
- 
+
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
- 
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
+
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
- 
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
- 
     --radius: 0.5rem;
   }
- 
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
+
+    --card: 222.2 84% 7%;
     --card-foreground: 210 40% 98%;
- 
-    --popover: 222.2 84% 4.9%;
+
+    --popover: 222.2 84% 7%;
     --popover-foreground: 210 40% 98%;
- 
+
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
- 
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
- 
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
+
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
- 
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
- 
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
+  }
+
+  body {
+    background-color: #f6f4ee;
+    color: #101c36;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
   }
 }
- 
-@layer base {
-  * {
-    @apply border-border;
+
+/* Custom Magnetic Fluid Cursor (Silky Lerp & Mix-Blend Difference) */
+.cursor-dot, .cursor-ring {
+  pointer-events: none;
+  z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: #ffffff;
+  mix-blend-mode: difference;
+  transition: opacity 0.2s ease;
+}
+
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1.5px solid #ffffff;
+  mix-blend-mode: difference;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  display: grid;
+  place-items: center;
+  transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              margin 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.cursor-ring.is-hover {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+}
+
+.cursor-ring.is-label {
+  width: 76px;
+  height: 76px;
+  margin: -38px 0 0 -38px;
+  background: #101c36;
+  color: #f6f4ee;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  mix-blend-mode: normal;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button,
+  body.has-custom-cursor [role="button"] {
+    cursor: none !important;
   }
-  body {
-    @apply bg-background text-foreground;
+  /* Allow normal text cursor for inputs and textareas so typing is comfortable */
+  body.has-custom-cursor input,
+  body.has-custom-cursor select,
+  body.has-custom-cursor textarea {
+    cursor: text !important;
   }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot, .cursor-ring {
+    display: none !important;
+  }
+}
+
+/* Authentic Drafting Paper Grid (Subtle, Non-Neon) */
+.paper-grid {
+  background-image: 
+    linear-gradient(to right, rgba(16, 28, 54, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 28, 54, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.blueprint-grid {
+  background-image: 
+    linear-gradient(to right, rgba(246, 244, 238, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(246, 244, 238, 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Rotating Architectural Seal Stamp */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.anim-spin-stamp {
+  animation: spin-slow 24s linear infinite;
+}
+
+/* Subtle hand-drawn wiggle for stamp notes */
+@keyframes note-drift {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.anim-note-drift {
+  animation: note-drift 6s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Smooth Entrance & Exit Animations (Reveal on Scroll, Tab Crossfade, Modals)
+   ========================================================================== */
+
+@keyframes slideUpFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes scaleInFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes scaleOutFade {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+}
+
+@keyframes pulseGlowOrange {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(234, 88, 12, 0.2), inset 0 0 10px rgba(234, 88, 12, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(234, 88, 12, 0.45), inset 0 0 15px rgba(234, 88, 12, 0.15);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+.anim-slide-up-in {
+  animation: slideUpFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-slide-up-out {
+  animation: slideUpFadeOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-scale-in {
+  animation: scaleInFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-pulse-glow-orange {
+  animation: pulseGlowOrange 3s ease-in-out infinite;
+}
+
+.anim-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+/* Stagger delay utilities */
+.delay-50 { animation-delay: 50ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ==========================================================================
+   Global Sleek Custom Scrollbars (Linear / macOS / Modern Web Aesthetic)
+   ========================================================================== */
+
+/* Universal Scrollbar for Webkit (Chrome, Safari, Edge, Brave, Opera) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(234, 88, 12, 0.8);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Eliminate chunky 90s browser up/down arrow buttons completely */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Dark Mode Universal Scrollbar */
+.dark ::-webkit-scrollbar-thumb,
+.dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+.dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dark ::-webkit-scrollbar-thumb:active,
+.dark::-webkit-scrollbar-thumb:active {
+  background: rgba(234, 88, 12, 0.85);
+}
+
+/* Universal Firefox & Standard Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
+}
+
+.dark, .dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Theme Scope Adaptability */
+.project-theme-scope {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+}
+
+.project-theme-scope ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+.project-theme-scope ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+.project-theme-scope ::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--primary));
+}
+
+/* Specialized Utility: Ultra-thin 5px scrollbars for boards & lists */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 9999px;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 88, 12, 0.7);
+}
+
+/* Custom Vertical & Horizontal Code Area Scrollbar */
+.custom-code-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-code-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+.custom-code-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+}
+
+.custom-code-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.custom-code-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.custom-code-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Custom Tabs & Modal Column Scrollbar */
+.custom-tabs-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 4px;
+}
+
+.custom-tabs-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-tabs-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+}
+
+.custom-tabs-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 88, 12, 0.7);
+}
+
+.custom-tabs-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.custom-tabs-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+/* Hide scrollbars completely where desired */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }

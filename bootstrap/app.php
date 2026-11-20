@@ -4,6 +4,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+// Force load project-specific .env to prevent environment variable leakage from Docker host/container
+if (file_exists(dirname(__DIR__) . '/.env')) {
+    \Dotenv\Dotenv::createMutable(dirname(__DIR__))->load();
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',

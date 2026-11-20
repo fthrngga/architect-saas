@@ -9,7 +9,7 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.jsx',
-        './resources/js/**/*.tsx', // Added tsx
+        './resources/js/**/*.tsx',
     ],
 
     theme: {
@@ -27,6 +27,30 @@ export default {
                 ring: "hsl(var(--ring))",
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
+                blueprint: {
+                    DEFAULT: "#00f0ff",
+                    50: "#ecfeff",
+                    100: "#cffafe",
+                    200: "#a5f3fc",
+                    300: "#67e8f9",
+                    400: "#22d3ee",
+                    500: "#06b6d4",
+                    600: "#0891b2",
+                    700: "#0e7490",
+                    800: "#155e75",
+                    900: "#164e63",
+                    950: "#083344",
+                },
+                cad: {
+                    bg: "#07090e",
+                    surface: "#0d111a",
+                    elevated: "#131a29",
+                    border: "rgba(255, 255, 255, 0.08)",
+                    line: "rgba(0, 240, 255, 0.2)",
+                    ochre: "#f59e0b",
+                    emerald: "#10b981",
+                    muted: "#64748b",
+                },
                 primary: {
                     DEFAULT: "hsl(var(--primary))",
                     foreground: "hsl(var(--primary-foreground))",
@@ -61,22 +85,26 @@ export default {
                 md: "calc(var(--radius) - 2px)",
                 sm: "calc(var(--radius) - 4px)",
             },
+            fontFamily: {
+                sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
+                poster: ['"Bebas Neue"', 'Impact', 'sans-serif'],
+                serif: ['"Newsreader"', 'Georgia', 'serif'],
+                hand: ['"Caveat"', 'cursive'],
+                mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
+            },
             keyframes: {
-                "accordion-down": {
-                    from: { height: 0 },
-                    to: { height: "var(--radix-accordion-content-height)" },
+                "scan-beam": {
+                    "0%": { transform: "translateY(-100%)" },
+                    "100%": { transform: "translateY(100%)" },
                 },
-                "accordion-up": {
-                    from: { height: "var(--radix-accordion-content-height)" },
-                    to: { height: 0 },
+                "pulse-glow": {
+                    "0%, 100%": { opacity: "0.4" },
+                    "50%": { opacity: "1" },
                 },
             },
             animation: {
-                "accordion-down": "accordion-down 0.2s ease-out",
-                "accordion-up": "accordion-up 0.2s ease-out",
-            },
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                "scan-beam": "scan-beam 4s ease-in-out infinite",
+                "pulse-glow": "pulse-glow 2.5s ease-in-out infinite",
             },
         },
     },

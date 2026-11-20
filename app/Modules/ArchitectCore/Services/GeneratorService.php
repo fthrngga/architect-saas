@@ -44,8 +44,19 @@ class GeneratorService
 
     public function destroy(Module $module)
     {
-        // 1. Drop the table if it exists
-        \Illuminate\Support\Facades\Schema::dropIfExists($module->table_name);
+        // 0. HARD GUARD: Never drop protected system tables (users, projects, migrations, etc.)
+        if (SchemaValidator::isProtectedTable($module->table_name)) {
+            \Illuminate\Support\Facades\Log::warning("Blocked drop of protected system table: {$module->table_name}");
+            return;
+        }
+
+        // 1. Drop the table if no other module uses it
+        $otherModulesUsingTable = Module::where('table_name', $module->table_name)
+            ->where('id', '!=', $module->id)
+            ->exists();
+        if (!$otherModulesUsingTable) {
+            \Illuminate\Support\Facades\Schema::dropIfExists($module->table_name);
+        }
 
         // 2. Delete the module directory
         $modulePath = app_path("Modules/{$module->name}");
@@ -53,11 +64,17 @@ class GeneratorService
             File::deleteDirectory($modulePath);
         }
 
-        // 3. Delete frontend files
-        $projectSlug = $module->project->slug;
-        $frontendPath = resource_path("js/Pages/Apps/{$projectSlug}/{$module->name}");
-        if (File::exists($frontendPath)) {
-            File::deleteDirectory($frontendPath);
+        // 3. Delete frontend files (check both paths)
+        $frontendPath1 = resource_path("js/Pages/{$module->name}");
+        if (File::exists($frontendPath1)) {
+            File::deleteDirectory($frontendPath1);
+        }
+        $projectSlug = $module->project->slug ?? '';
+        if ($projectSlug) {
+            $frontendPath2 = resource_path("js/Pages/Apps/{$projectSlug}/{$module->name}");
+            if (File::exists($frontendPath2)) {
+                File::deleteDirectory($frontendPath2);
+            }
         }
     }
 
@@ -157,7 +174,13 @@ class GeneratorService
             $type = $attr['type'];
             $name = $attr['name'];
             $nullable = isset($attr['nullable']) && $attr['nullable'] ? '->nullable()' : '';
-            $columns .= "\$table->{$type}('{$name}'){$nullable};\n            ";
+            if ($type === 'currency') {
+                $columns .= "\$table->decimal('{$name}', 15, 2){$nullable};\n            ";
+            } elseif ($type === 'relation') {
+                $columns .= "\$table->uuid('{$name}')->nullable()->index();\n            ";
+            } else {
+                $columns .= "\$table->{$type}('{$name}'){$nullable};\n            ";
+            }
         }
 
         $softDeletes = '$table->softDeletes();';
@@ -192,10 +215,15 @@ class GeneratorService
                 case 'bigInteger':
                     $fieldRules[] = 'integer';
                     break;
+                case 'currency':
                 case 'decimal':
                 case 'float':
                 case 'double':
                     $fieldRules[] = 'numeric';
+                    break;
+                case 'relation':
+                    $fieldRules[] = 'nullable';
+                    $fieldRules[] = 'string';
                     break;
                 case 'boolean':
                     $fieldRules[] = 'boolean';

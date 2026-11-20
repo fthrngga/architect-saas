@@ -15,6 +15,7 @@ class Module extends Model
 
     protected $casts = [
         'attributes' => 'array',
+        'relations' => 'array',
         'settings' => 'array',
     ];
 

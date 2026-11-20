@@ -49,10 +49,13 @@ class ProjectExportService
         // 6. Create Standalone Routes
         $this->createRoutes($project, $tempDir);
 
-        // 7. Cleanup SaaS Dependencies
+        // 7. Apply Custom UI Theme (Tweakcn / Shadcn styling)
+        $this->applyTheme($project, $tempDir);
+
+        // 8. Cleanup SaaS Dependencies
         $this->cleanupSaaS($tempDir);
 
-        // 8. Zip it (Wrap inside project folder)
+        // 9. Zip it (Wrap inside project folder)
         $this->zipDirectory($tempDir, $zipPath, $projectName);
 
         // Cleanup temp
@@ -167,18 +170,34 @@ class ProjectExportService
         $modules = $project->modules()->where('status', 'generated')->get();
 
         foreach ($modules as $module) {
-            // Note: Now unified to resources/js/Pages/{Module}
             $source = resource_path("js/Pages/{$module->name}");
             if (File::exists($source)) {
                 $dest = "{$targetDir}/resources/js/Pages/{$module->name}";
                 File::copyDirectory($source, $dest);
-                $this->refactorFrontendImports($dest);
+                $this->refactorFrontendImports($dest, $project);
             }
         }
 
         $layoutStub = resource_path("stubs/architect/app_layout.stub");
         if (File::exists($layoutStub)) {
-            File::put("{$targetDir}/resources/js/Layouts/AppLayout.tsx", File::get($layoutStub));
+            $layoutContent = File::get($layoutStub);
+            // Inject module links into sidebar
+            $moduleLinks = "";
+            foreach ($modules as $mod) {
+                $modLabel = Str::plural($mod->name);
+                $moduleLinks .= "
+                    <div className=\"py-1\">
+                        <Link
+                            href=\"/{$mod->table_name}\"
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors \${usePage().url.startsWith('/{$mod->table_name}') ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                        >
+                            <Box className=\"w-4 h-4\" />
+                            {$modLabel}
+                        </Link>
+                    </div>";
+            }
+            $layoutContent = str_replace('{/* Modules will be injected here', $moduleLinks . "\n{/* Modules will be injected here", $layoutContent);
+            File::put("{$targetDir}/resources/js/Layouts/AppLayout.tsx", $layoutContent);
         }
 
         // Inject Simple Dashboard
@@ -186,16 +205,22 @@ class ProjectExportService
         File::put("{$targetDir}/resources/js/Pages/Dashboard.tsx", $dashboardContent);
     }
 
-    protected function refactorFrontendImports($directory)
+    protected function refactorFrontendImports($directory, Project $project)
     {
         $files = File::allFiles($directory);
+        $ownerHandle = $project->owner->handle ?? '';
+        $basePrefix = "/app/{$ownerHandle}/{$project->slug}";
+
         foreach ($files as $file) {
             $content = File::get($file->getPathname());
             $content = str_replace("import UserAppLayout from '@/Layouts/UserAppLayout';", "import AppLayout from '@/Layouts/AppLayout';", $content);
             $content = str_replace('<UserAppLayout', '<AppLayout', $content);
             $content = str_replace('</UserAppLayout>', '</AppLayout>', $content);
 
-            // Replace baseUrl placeholder with empty string for root-level access in exported app
+            // Replace SaaS app URL prefix with empty string for root-level access in exported app
+            if ($basePrefix) {
+                $content = str_replace($basePrefix, '', $content);
+            }
             $content = str_replace('{{ baseUrl }}', '', $content);
 
             File::put($file->getPathname(), $content);
@@ -220,6 +245,31 @@ class ProjectExportService
 
         $routes .= "});\n\nrequire __DIR__.'/auth.php';\n";
         File::put("{$targetDir}/routes/web.php", $routes);
+    }
+
+    protected function applyTheme(Project $project, $targetDir)
+    {
+        $settings = $project->settings ?? [];
+        $theme = $settings['theme'] ?? null;
+        if (!$theme) {
+            return;
+        }
+
+        $cssPath = "{$targetDir}/resources/css/app.css";
+        if (File::exists($cssPath)) {
+            $cssContent = ThemeRegistry::buildCssContent($theme);
+            File::put($cssPath, $cssContent);
+        }
+
+        if (!empty($theme['googleFontUrl'])) {
+            $bladePath = "{$targetDir}/resources/views/app.blade.php";
+            if (File::exists($bladePath)) {
+                $bladeContent = File::get($bladePath);
+                $fontLink = '<link rel="stylesheet" href="' . e($theme['googleFontUrl']) . '">';
+                $bladeContent = str_replace('</head>', "    {$fontLink}\n    </head>", $bladeContent);
+                File::put($bladePath, $bladeContent);
+            }
+        }
     }
 
     protected function cleanupSaaS($targetDir)
